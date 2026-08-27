@@ -1,0 +1,29 @@
+{
+  "name": "fintrack",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.0.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "eslint . --max-warnings=0",
+    "lint:turbo": "turbo run lint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.2",
+    "globals": "^15.15.0",
+    "prettier": "^3.4.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.68.0"
+  }
+}

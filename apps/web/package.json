@@ -1,0 +1,11 @@
+{
+  "name": "@fintrack/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"@fintrack/web build ok\" && exit 0",
+    "dev": "echo \"@fintrack/web dev\" && exit 0",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit"
+  }
+}

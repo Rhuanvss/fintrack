@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@fintrack/shared": ["packages/shared/src"]
+    },
+    "noEmit": true
+  },
+  "include": ["apps/**/src/**/*", "packages/**/src/**/*"],
+  "exclude": ["node_modules", "dist", ".next", ".turbo"]
+}
