@@ -19,6 +19,7 @@ export default tseslint.config(
       '**/*.js',
       '**/*.mjs',
       '**/*.cjs',
+      '**/next-env.d.ts',
     ],
   },
   js.configs.recommended,
@@ -31,7 +32,9 @@ export default tseslint.config(
         ...globals.browser,
       },
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['apps/web/tailwind.config.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -50,5 +53,13 @@ export default tseslint.config(
   {
     files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    files: ['**/tailwind.config.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+    },
   },
 );

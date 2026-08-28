@@ -5,14 +5,14 @@
 - [x] 1.1 Scaffold monorepo pnpm workspaces + Turborepo com `apps/api`, `apps/web`, `packages/shared` e verificar `pnpm build` e `turbo run build` passam sem erros (~80 LOC config)
 - [x] 1.2 Configurar ESLint + Prettier + tsconfig strict base compartilhado e verificar `pnpm lint` e `tsc --noEmit` passam em api/web/shared (~60 LOC)
 - [x] 1.3 Inicializar NestJS em `apps/api` com AppModule vazio, `ConfigModule`, `PrismaService` placeholder e verificar `pnpm --filter api start:dev` sobe em :3001 (~250 LOC)
-- [ ] 1.4 Inicializar Prisma + Docker: `prisma init`, `docker-compose.yml` Postgres, `.env.example` e verificar `docker-compose up -d` e `prisma migrate dev --name init` executam (~180 LOC)
-- [ ] 1.5 Inicializar Next.js 15 App Router em `apps/web` com Tailwind + shadcn/ui init e verificar `pnpm --filter web dev` sobe em :3000 com página inicial (~350 LOC)
-- [ ] 1.6 Criar `packages/shared` v0 com tipos `User`, `Account` e helpers `Paginated<T>` e verificar import tipado em api e web quebra build se divergir (~150 LOC)
-- [ ] 1.7 Adicionar `ValidationPipe {whitelist, forbidNonWhitelisted, transform}`, `HttpExceptionFilter`, `LoggingInterceptor`, `ThrottlerGuard` rate-limit e verificar 400 em payload extra e logs aparecem em dev (~260 LOC) — movido de 6.5 para antes dos controllers
+- [x] 1.4 Inicializar Prisma + Docker: `prisma init`, `docker-compose.yml` Postgres, `.env.example` e verificar `docker-compose up -d` e `prisma migrate dev --name init` executam (~180 LOC)
+- [x] 1.5 Inicializar Next.js 15 App Router em `apps/web` com Tailwind + shadcn/ui init e verificar `pnpm --filter web dev` sobe em :3000 com página inicial (~350 LOC)
+- [x] 1.6 Criar `packages/shared` v0 com tipos `User`, `Account` e helpers `Paginated<T>` e verificar import tipado em api e web quebra build se divergir (~150 LOC)
+- [x] 1.7 Adicionar `ValidationPipe {whitelist, forbidNonWhitelisted, transform}`, `HttpExceptionFilter`, `LoggingInterceptor`, `ThrottlerGuard` rate-limit e verificar 400 em payload extra e logs aparecem em dev (~260 LOC) — movido de 6.5 para antes dos controllers
 
 ## 2. Auth e Modelagem Base (Semana 1-2) — fatiado para <500 LOC cada
 
-- [ ] 2.1 Modelar Prisma schema: `User`, `Account`, `Category` (self-relation parentId), `Transaction` (Decimal, transferId), `Budget` com índices `(userId,date)` e unique `@@unique([userId, categoryId, month, year])` e verificar `prisma migrate dev` e `prisma generate` geram client tipado (~220 LOC)
+- [x] 2.1 Modelar Prisma schema: `User`, `Account`, `Category` (self-relation parentId), `Transaction` (Decimal, transferId), `Budget` com índices `(userId,date)` e unique `@@unique([userId, categoryId, month, year])` e verificar `prisma migrate dev` e `prisma generate` geram client tipado (~220 LOC)
 - [ ] 2.2 Criar DTOs auth `RegisterDto`/`LoginDto` com `class-validator` e schemas Zod espelhados em `packages/shared` e verificar teste unitário de validação rejeita email inválido e senha <8 (~180 LOC)
 - [ ] 2.3 Implementar `AuthService` register/login: hash bcrypt, criação User, geração access 15m + refresh 7d e verificar unit test de hash e login com senha incorreta retorna 401 (~350 LOC)
 - [ ] 2.4 Implementar `JwtStrategy`, `JwtAuthGuard` global, decorador `@CurrentUser()` e `POST /auth/refresh` com cookie httpOnly e verificar e2e: `POST /auth/register` 201 seta cookie, `GET /accounts` sem token 401 (~380 LOC)

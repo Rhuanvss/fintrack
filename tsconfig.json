@@ -3,8 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@/*": ["apps/web/src/*"],
       "@fintrack/shared": ["packages/shared/src"]
     },
+    "jsx": "preserve",
     "noEmit": true
   },
   "include": ["apps/**/src/**/*", "packages/**/src/**/*"],
