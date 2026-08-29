@@ -18,6 +18,26 @@ describe('Auth DTOs - class-validator', () => {
     expect(fields).toContain('password');
   });
 
+  it('should reject password with less than 8 characters even with letter and number', async () => {
+    const dto = plainToInstance(RegisterDto, {
+      name: 'Test',
+      email: 'test@example.com',
+      password: 'Abc1234', // 7 chars, has letter and number but too short
+    });
+    const errors = await validate(dto);
+    expect(errors.some((e) => e.property === 'password')).toBe(true);
+  });
+
+  it('should reject invalid email format', async () => {
+    const dto = plainToInstance(RegisterDto, {
+      name: 'Valid Name',
+      email: 'invalid-email-no-at',
+      password: 'Password123',
+    });
+    const errors = await validate(dto);
+    expect(errors.some((e) => e.property === 'email')).toBe(true);
+  });
+
   it('should reject password without letter or number', async () => {
     const dto = plainToInstance(RegisterDto, {
       name: 'Test',
@@ -68,6 +88,30 @@ describe('Auth Zod schemas - packages/shared', () => {
       const fields = result.error.issues.map((i) => i.path[0]);
       expect(fields).toContain('email');
       expect(fields).toContain('password');
+    }
+  });
+
+  it('should reject password <8 via Zod even with letter and number', () => {
+    const result = registerSchema.safeParse({
+      name: 'Test',
+      email: 'test@example.com',
+      password: 'Abc1234', // 7 chars
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path[0] === 'password')).toBe(true);
+    }
+  });
+
+  it('should reject invalid email via Zod', () => {
+    const result = registerSchema.safeParse({
+      name: 'Test',
+      email: 'invalid-email-no-at',
+      password: 'Password123',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path[0] === 'email')).toBe(true);
     }
   });
 
