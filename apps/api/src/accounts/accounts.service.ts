@@ -39,13 +39,53 @@ export class AccountsService {
       where,
       orderBy: { createdAt: 'asc' },
     });
-    const withBalance = await Promise.all(
-      accounts.map(async (acc) => ({
-        ...acc,
-        balance: await this.computeBalance(acc.id, userId),
-      })),
-    );
-    return withBalance;
+    if (accounts.length === 0) return [];
+
+    const accountIds = accounts.map((a) => a.id);
+    const transactions = await this.prisma.transaction.findMany({
+      where: { accountId: { in: accountIds }, userId },
+      select: { id: true, amount: true, type: true, transferId: true, accountId: true, createdAt: true },
+    });
+
+    const transferIds = [...new Set(transactions.filter((tx) => tx.type === 'TRANSFER' && tx.transferId).map((tx) => tx.transferId!))];
+    const sourceMap = new Map<string, string>();
+    if (transferIds.length > 0) {
+      const paired = await this.prisma.transaction.findMany({
+        where: { transferId: { in: transferIds } },
+        select: { transferId: true, accountId: true, createdAt: true, id: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      for (const tid of transferIds) {
+        const group = paired.filter((p) => p.transferId === tid).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
+        if (group.length > 0) sourceMap.set(tid, group[0]!.accountId);
+      }
+    }
+
+    const byAccount = new Map<string, typeof transactions>();
+    for (const tx of transactions) {
+      const arr = byAccount.get(tx.accountId) ?? [];
+      arr.push(tx);
+      byAccount.set(tx.accountId, arr);
+    }
+
+    return accounts.map((acc) => {
+      const txs = byAccount.get(acc.id) ?? [];
+      let balance = 0;
+      for (const tx of txs) {
+        const amount = Number(tx.amount);
+        if (tx.type === 'INCOME') balance += amount;
+        else if (tx.type === 'EXPENSE') balance -= amount;
+        else if (tx.type === 'TRANSFER') {
+          if (!tx.transferId) {
+            balance += amount;
+            continue;
+          }
+          const src = sourceMap.get(tx.transferId);
+          balance += src === acc.id ? -amount : amount;
+        }
+      }
+      return { ...acc, balance };
+    });
   }
 
   async findOne(id: string, userId: string): Promise<AccountWithBalance> {
@@ -102,18 +142,20 @@ export class AccountsService {
     }
     const transactions = await this.prisma.transaction.findMany({
       where: { accountId, userId },
-      select: { amount: true, type: true, transferId: true },
+      select: { id: true, amount: true, type: true, transferId: true, createdAt: true },
     });
 
     const transferIds = [...new Set(transactions.filter((tx) => tx.type === 'TRANSFER' && tx.transferId).map((tx) => tx.transferId!))];
-    const pairedMap = new Map<string, string>();
+    const sourceMap = new Map<string, string>();
     if (transferIds.length > 0) {
       const paired = await this.prisma.transaction.findMany({
         where: { transferId: { in: transferIds } },
-        select: { transferId: true, accountId: true },
+        select: { transferId: true, accountId: true, createdAt: true, id: true },
+        orderBy: { createdAt: 'asc' },
       });
-      for (const p of paired) {
-        if (p.transferId) pairedMap.set(p.transferId, p.accountId);
+      for (const tid of transferIds) {
+        const group = paired.filter((p) => p.transferId === tid).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
+        if (group.length > 0) sourceMap.set(tid, group[0]!.accountId);
       }
     }
 
@@ -125,8 +167,12 @@ export class AccountsService {
       } else if (tx.type === 'EXPENSE') {
         balance -= amount;
       } else if (tx.type === 'TRANSFER') {
-        const pairedAccountId = tx.transferId ? pairedMap.get(tx.transferId) : undefined;
-        balance += pairedAccountId === accountId ? amount : -amount;
+        if (!tx.transferId) {
+          balance += amount;
+          continue;
+        }
+        const sourceAccountId = sourceMap.get(tx.transferId);
+        balance += sourceAccountId === accountId ? -amount : amount;
       }
     }
     return balance;

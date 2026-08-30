@@ -55,7 +55,7 @@ describe('AccountsService - task 2.7', () => {
     expect(prisma.account.findFirst).toHaveBeenCalledWith({ where: { id: accountId, userId } });
     expect(prisma.transaction.findMany).toHaveBeenCalledWith({
       where: { accountId, userId },
-      select: { amount: true, type: true, transferId: true },
+      select: { id: true, amount: true, type: true, transferId: true, createdAt: true },
     });
   });
 
@@ -70,13 +70,15 @@ describe('AccountsService - task 2.7', () => {
     prisma.account.findFirst.mockResolvedValue({ id: accountId, userId } as never);
     prisma.transaction.findMany
       .mockResolvedValueOnce([
-        { amount: 100 as unknown as never, type: 'INCOME', transferId: null },
-        { amount: 50 as unknown as never, type: 'TRANSFER', transferId: 'tx_1' },
-        { amount: 30 as unknown as never, type: 'TRANSFER', transferId: 'tx_2' },
+        { id: 't1', amount: 100 as unknown as never, type: 'INCOME', transferId: null, createdAt: new Date('2024-01-01') },
+        { id: 't2', amount: 50 as unknown as never, type: 'TRANSFER', transferId: 'tx_1', createdAt: new Date('2024-01-02') },
+        { id: 't3', amount: 30 as unknown as never, type: 'TRANSFER', transferId: 'tx_2', createdAt: new Date('2024-01-03') },
       ] as never)
       .mockResolvedValueOnce([
-        { transferId: 'tx_1', accountId: 'acc_dst' },
-        { transferId: 'tx_2', accountId: accountId },
+        { transferId: 'tx_1', accountId: 'acc_src', createdAt: new Date('2024-01-01T10:00:00Z'), id: 'p1' },
+        { transferId: 'tx_1', accountId: 'acc_dst', createdAt: new Date('2024-01-01T10:00:01Z'), id: 'p2' },
+        { transferId: 'tx_2', accountId: 'acc_other', createdAt: new Date('2024-01-02T10:00:00Z'), id: 'p3' },
+        { transferId: 'tx_2', accountId: 'acc_src', createdAt: new Date('2024-01-02T10:00:01Z'), id: 'p4' },
       ] as never);
 
     const balance = await service.computeBalance(accountId, userId);
