@@ -20,6 +20,7 @@ describe('CategoriesService - task 2.9', () => {
     budget: {
       count: jest.Mock;
     };
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -38,6 +39,7 @@ describe('CategoriesService - task 2.9', () => {
       budget: {
         count: jest.fn(),
       },
+      $transaction: jest.fn().mockImplementation(async (cb: (tx: typeof prisma) => Promise<unknown>) => cb(prisma)),
     };
 
     const module = await Test.createTestingModule({
@@ -93,17 +95,19 @@ describe('CategoriesService - task 2.9', () => {
   it('remove com transações sem reassignTo 409', async () => {
     prisma.category.findFirst.mockResolvedValue({ id: 'cat_1', name: 'A', parentId: null, userId: 'user_1' } as never);
     prisma.transaction.count.mockResolvedValue(2 as never);
+    prisma.budget.count.mockResolvedValue(0 as never);
     await expect(service.remove('cat_1', 'user_1')).rejects.toThrow(ConflictException);
   });
 
   it('remove com reassignTo reatribui e deleta', async () => {
     prisma.category.findFirst.mockResolvedValueOnce({ id: 'cat_1', name: 'A', parentId: null, userId: 'user_1' } as never).mockResolvedValueOnce({ id: 'cat_2', name: 'B', parentId: null, userId: 'user_1' } as never);
     prisma.transaction.count.mockResolvedValue(2 as never);
-    prisma.transaction.updateMany.mockResolvedValue({ count: 2 } as never);
     prisma.budget.count.mockResolvedValue(0 as never);
+    prisma.transaction.updateMany.mockResolvedValue({ count: 2 } as never);
     prisma.category.delete.mockResolvedValue({ id: 'cat_1' } as never);
 
     const result = await service.remove('cat_1', 'user_1', 'cat_2');
+    expect(prisma.$transaction).toHaveBeenCalled();
     expect(prisma.transaction.updateMany).toHaveBeenCalledWith({ where: { categoryId: 'cat_1', userId: 'user_1' }, data: { categoryId: 'cat_2' } });
     expect(prisma.category.delete).toHaveBeenCalledWith({ where: { id: 'cat_1' } });
     expect(result.id).toBe('cat_1');

@@ -163,9 +163,14 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    const txCount = await this.prisma.transaction.count({
-      where: { categoryId: id, userId },
-    });
+    const [txCount, budgetCount] = await Promise.all([
+      this.prisma.transaction.count({ where: { categoryId: id, userId } }),
+      this.prisma.budget.count({ where: { categoryId: id, userId } }),
+    ]);
+
+    if (budgetCount > 0) {
+      throw new ConflictException('Category has budgets, delete or update them first');
+    }
 
     if (txCount > 0 && !reassignTo) {
       throw new ConflictException('Category has transactions, reassignTo is required');
@@ -181,23 +186,17 @@ export class CategoriesService {
       if (reassignTo === id) {
         throw new BadRequestException('Cannot reassign to same category');
       }
-      await this.prisma.transaction.updateMany({
-        where: { categoryId: id, userId },
-        data: { categoryId: reassignTo },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.transaction.updateMany({
+          where: { categoryId: id, userId },
+          data: { categoryId: reassignTo },
+        });
+        await tx.category.delete({ where: { id } });
       });
+      return { id };
     }
 
-    const budgetCount = await this.prisma.budget.count({
-      where: { categoryId: id, userId },
-    });
-    if (budgetCount > 0) {
-      throw new ConflictException('Category has budgets, delete or update them first');
-    }
-
-    await this.prisma.category.delete({
-      where: { id },
-    });
-
+    await this.prisma.category.delete({ where: { id } });
     return { id };
   }
 }
