@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/require-await */
 import { ValidationPipe } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -19,10 +18,27 @@ describe('Auth E2E - task 2.4', () => {
       create: jest.Mock;
       update: jest.Mock;
     };
+    category: {
+      createMany: jest.Mock;
+      findMany: jest.Mock;
+    };
+    account: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
+    };
+    transaction: {
+      findMany: jest.Mock;
+    };
     $transaction: jest.Mock;
   };
   const users = new Map<string, { id: string; name: string; email: string; password: string; role: string; refreshToken: string | null; createdAt: Date; updatedAt: Date }>();
+  const categories = new Map<string, { id: string; name: string; color: string | null; icon: string | null; parentId: string | null; userId: string; createdAt: Date; updatedAt: Date }[]>();
+  const accounts = new Map<string, { id: string; name: string; type: string; color: string | null; isArchived: boolean; userId: string; createdAt: Date; updatedAt: Date }>();
   let userIdSeq = 1;
+  let categoryIdSeq = 1;
+  let accountIdSeq = 1;
 
   beforeAll(async () => {
     prismaMock = {
@@ -61,6 +77,72 @@ describe('Auth E2E - task 2.4', () => {
           return user;
         }),
       },
+      category: {
+        createMany: jest.fn().mockImplementation(async ({ data }: { data: { name: string; color: string; icon: string; parentId: string | null; userId: string }[] }) => {
+          for (const cat of data) {
+            const id = `cat_${categoryIdSeq++}`;
+            const entry = {
+              id,
+              name: cat.name,
+              color: cat.color,
+              icon: cat.icon,
+              parentId: cat.parentId ?? null,
+              userId: cat.userId,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            const list = categories.get(cat.userId) ?? [];
+            list.push(entry);
+            categories.set(cat.userId, list);
+          }
+          return { count: data.length };
+        }),
+        findMany: jest.fn().mockImplementation(async ({ where }: { where: { userId: string } }) => {
+          return categories.get(where.userId) ?? [];
+        }),
+      },
+      account: {
+        create: jest.fn().mockImplementation(async ({ data }: { data: { name: string; type: string; color: string | null; userId: string } }) => {
+          const id = `acc_${accountIdSeq++}`;
+          const acc = {
+            id,
+            name: data.name,
+            type: data.type,
+            color: data.color ?? null,
+            isArchived: false,
+            userId: data.userId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          accounts.set(id, acc);
+          return acc;
+        }),
+        findMany: jest.fn().mockImplementation(async ({ where }: { where: { userId: string; isArchived?: boolean } }) => {
+          const all = Array.from(accounts.values()).filter((a) => a.userId === where.userId);
+          if (where.isArchived === false) {
+            return all.filter((a) => !a.isArchived);
+          }
+          if (where.isArchived === true) {
+            return all.filter((a) => a.isArchived);
+          }
+          return all;
+        }),
+        findFirst: jest.fn().mockImplementation(async ({ where }: { where: { id: string; userId: string } }) => {
+          const acc = accounts.get(where.id);
+          if (!acc || acc.userId !== where.userId) return null;
+          return acc;
+        }),
+        update: jest.fn().mockImplementation(async ({ where, data }: { where: { id: string }; data: { isArchived?: boolean; name?: string; type?: string; color?: string | null } }) => {
+          const acc = accounts.get(where.id);
+          if (!acc) return null;
+          const updated = { ...acc, ...data, updatedAt: new Date() } as typeof acc;
+          accounts.set(where.id, updated);
+          return updated;
+        }),
+      },
+      transaction: {
+        findMany: jest.fn().mockImplementation(async () => []),
+      },
       $transaction: jest.fn().mockImplementation(async (cb: (tx: typeof prismaMock) => Promise<unknown>) => cb(prismaMock)),
     };
 
@@ -91,7 +173,11 @@ describe('Auth E2E - task 2.4', () => {
 
   beforeEach(() => {
     users.clear();
+    categories.clear();
+    accounts.clear();
     userIdSeq = 1;
+    categoryIdSeq = 1;
+    accountIdSeq = 1;
     __resetAccountsStore();
     jest.clearAllMocks();
     // keep mock implementations
@@ -121,12 +207,64 @@ describe('Auth E2E - task 2.4', () => {
     prismaMock.user.update.mockImplementation(async ({ where, data }: { where: { id: string }; data: { refreshToken: string | null } }) => {
       const user = users.get(where.id);
       if (!user) return null;
-      // Prisma update com refreshToken: null deve limpar
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       user.refreshToken = data.refreshToken as string | null;
       users.set(where.id, user);
       return user;
     });
+    prismaMock.category.createMany.mockImplementation(async ({ data }: { data: { name: string; color: string; icon: string; parentId: string | null; userId: string }[] }) => {
+      for (const cat of data) {
+        const id = `cat_${categoryIdSeq++}`;
+        const entry = {
+          id,
+          name: cat.name,
+          color: cat.color,
+          icon: cat.icon,
+          parentId: cat.parentId ?? null,
+          userId: cat.userId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        const list = categories.get(cat.userId) ?? [];
+        list.push(entry);
+        categories.set(cat.userId, list);
+      }
+      return { count: data.length };
+    });
+    prismaMock.category.findMany.mockImplementation(async ({ where }: { where: { userId: string } }) => categories.get(where.userId) ?? []);
+    prismaMock.account.create.mockImplementation(async ({ data }: { data: { name: string; type: string; color: string | null; userId: string } }) => {
+      const id = `acc_${accountIdSeq++}`;
+      const acc = {
+        id,
+        name: data.name,
+        type: data.type,
+        color: data.color ?? null,
+        isArchived: false,
+        userId: data.userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      accounts.set(id, acc);
+      return acc;
+    });
+    prismaMock.account.findMany.mockImplementation(async ({ where }: { where: { userId: string; isArchived?: boolean } }) => {
+      const all = Array.from(accounts.values()).filter((a) => a.userId === where.userId);
+      if (where.isArchived === false) return all.filter((a) => !a.isArchived);
+      if (where.isArchived === true) return all.filter((a) => a.isArchived);
+      return all;
+    });
+    prismaMock.account.findFirst.mockImplementation(async ({ where }: { where: { id: string; userId: string } }) => {
+      const acc = accounts.get(where.id);
+      if (!acc || acc.userId !== where.userId) return null;
+      return acc;
+    });
+    prismaMock.account.update.mockImplementation(async ({ where, data }: { where: { id: string }; data: { isArchived?: boolean; name?: string; type?: string; color?: string | null } }) => {
+      const acc = accounts.get(where.id);
+      if (!acc) return null;
+      const updated = { ...acc, ...data, updatedAt: new Date() } as typeof acc;
+      accounts.set(where.id, updated);
+      return updated;
+    });
+    prismaMock.transaction.findMany.mockImplementation(async () => []);
     prismaMock.$transaction.mockImplementation(async (cb: (tx: typeof prismaMock) => Promise<unknown>) => cb(prismaMock));
   });
 
@@ -215,8 +353,8 @@ describe('Auth E2E - task 2.4', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(res.body).toHaveProperty('userId', reg.body.user.id);
-    expect(res.body).toHaveProperty('accounts');
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveLength(0);
   });
 
   it('POST /api/auth/refresh with httpOnly cookie returns new accessToken', async () => {
@@ -267,7 +405,7 @@ describe('Auth E2E - task 2.4', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(res.body.userId).toBe(reg.body.user.id);
+    expect(Array.isArray(res.body)).toBe(true);
   });
 
   it('POST /api/auth/logout limpa cookie e invalida refresh subsequente 401', async () => {
@@ -325,7 +463,7 @@ describe('Auth E2E - task 2.4', () => {
     const accRes = await request(app.getHttpServer())
       .post('/api/accounts')
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ name: 'Conta A' })
+      .send({ name: 'Conta A', type: 'WALLET' })
       .expect(201);
     const accId = accRes.body.id as string;
 
@@ -343,5 +481,48 @@ describe('Auth E2E - task 2.4', () => {
 
     // sem token também 401, não 404
     await request(app.getHttpServer()).get(`/api/accounts/${accId}`).expect(401);
+  });
+
+  it('GET /api/categories após register retorna categorias padrão com parentId/cor/ícone', async () => {
+    const reg = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({ name: 'CatUser', email: 'cat@example.com', password: 'Password123' })
+      .expect(201);
+
+    const token = reg.body.accessToken as string;
+
+    const res = await request(app.getHttpServer())
+      .get('/api/categories')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(8);
+    expect(res.body.length).toBeLessThanOrEqual(12);
+    for (const cat of res.body as { id: string; name: string; color: string; icon: string; parentId: string | null; userId: string }[]) {
+      expect(cat).toHaveProperty('id');
+      expect(cat).toHaveProperty('name');
+      expect(cat).toHaveProperty('color');
+      expect(cat).toHaveProperty('icon');
+      expect(cat).toHaveProperty('parentId');
+      expect(cat).toHaveProperty('userId', reg.body.user.id);
+      expect(typeof cat.color).toBe('string');
+      expect(typeof cat.icon).toBe('string');
+    }
+    const reg2 = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({ name: 'CatUser2', email: 'cat2@example.com', password: 'Password123' })
+      .expect(201);
+    const token2 = reg2.body.accessToken as string;
+    const res2 = await request(app.getHttpServer())
+      .get('/api/categories')
+      .set('Authorization', `Bearer ${token2}`)
+      .expect(200);
+    expect(res2.body.length).toBeGreaterThanOrEqual(8);
+    expect((res.body as { userId: string }[])[0]!.userId).not.toBe((res2.body as { userId: string }[])[0]!.userId);
+  });
+
+  it('GET /api/categories sem token 401', async () => {
+    await request(app.getHttpServer()).get('/api/categories').expect(401);
   });
 });

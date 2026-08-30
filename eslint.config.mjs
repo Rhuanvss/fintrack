@@ -55,6 +55,10 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
+    files: ['**/*.spec.ts', '**/*.e2e.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
     files: ['**/tailwind.config.ts'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',

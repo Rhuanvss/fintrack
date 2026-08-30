@@ -10,6 +10,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     AuthModule,
     AccountsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [

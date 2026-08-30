@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { createHash } from 'crypto';
+import { DEFAULT_CATEGORIES } from '../categories/default-categories';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -91,6 +92,22 @@ export class AuthService {
       where: { id: user.id },
       data: { refreshToken: hashedRefresh },
     });
+
+    try {
+      await this.prisma.category.createMany({
+        data: DEFAULT_CATEGORIES.map((cat) => ({
+          name: cat.name,
+          color: cat.color,
+          icon: cat.icon,
+          parentId: cat.parentId ?? null,
+          userId: user.id,
+        })),
+        skipDuplicates: true,
+      });
+    } catch {
+      // Seed de categorias não deve bloquear registro — log e segue
+      console.warn(`[AuthService] Failed to seed default categories for user ${user.id}`);
+    }
 
     return {
       user: this.sanitizeUser(user),
