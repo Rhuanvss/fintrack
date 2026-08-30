@@ -14,14 +14,14 @@
 
 - [x] 2.1 Modelar Prisma schema: `User`, `Account`, `Category` (self-relation parentId), `Transaction` (Decimal, transferId), `Budget` com índices `(userId,date)` e unique `@@unique([userId, categoryId, month, year])` e verificar `prisma migrate dev` e `prisma generate` geram client tipado (~220 LOC)
 - [x] 2.2 Criar DTOs auth `RegisterDto`/`LoginDto` com `class-validator` e schemas Zod espelhados em `packages/shared` e verificar teste unitário de validação rejeita email inválido e senha <8 (~180 LOC)
-- [x] 2.3 Implementar `AuthService` register/login: hash bcrypt, criação User, geração access 15m + refresh 7d e verificar unit test de hash e login com senha incorreta retorna 401 (~350 LOC)
-- [x] 2.4 Implementar `JwtStrategy`, `JwtAuthGuard` global, decorador `@CurrentUser()` e `POST /auth/refresh` com cookie httpOnly e verificar e2e: `POST /auth/register` 201 seta cookie, `GET /accounts` sem token 401 (~380 LOC)
-- [x] 2.5 Implementar `POST /auth/logout` com invalidação de refresh e teste de isolamento: usuário A não acessa recurso de B retorna 404 e verificar e2e logout limpa cookie e refresh subsequente 401 (~220 LOC)
-- [x] 2.6 Seed categorias padrão no register (8-12 via `prisma createMany`) e verificar e2e `GET /categories` após register retorna árvore com `parentId` e cor/ícone (~150 LOC)
-- [x] 2.7 Implementar `fintrack-accounts` service: CRUD + `computeBalance` (sum INCOME - EXPENSE + TRANSFER) e verificar unit test balance 170 com 2 incomes 100 e 1 expense 30 (~320 LOC)
-- [x] 2.8 Implementar `fintrack-accounts` controller: `POST/GET/PATCH /accounts`, `PATCH /accounts/:id/archive` com `?includeArchived` e verificar e2e lista apenas contas do user e arquivada some da listagem padrão (~300 LOC)
-- [x] 2.9 Implementar `fintrack-categories` service: CRUD hierárquico 1 nível, unicidade case-insensitive por `(userId, parentId, name)` e verificar unit 409 ao duplicar nome no mesmo parent (~300 LOC)
-- [x] 2.10 Implementar `fintrack-categories` controller: `DELETE /categories/:id` com 409 se houver transações e `?reassignTo=` e verificar e2e 409 ao deletar em uso e 200 com reassign (~280 LOC)
+- [ ] 2.3 Implementar `AuthService` register/login: hash bcrypt, criação User, geração access 15m + refresh 7d e verificar unit test de hash e login com senha incorreta retorna 401 (~350 LOC)
+- [ ] 2.4 Implementar `JwtStrategy`, `JwtAuthGuard` global, decorador `@CurrentUser()` e `POST /auth/refresh` com cookie httpOnly e verificar e2e: `POST /auth/register` 201 seta cookie, `GET /accounts` sem token 401 (~380 LOC)
+- [ ] 2.5 Implementar `POST /auth/logout` com invalidação de refresh e teste de isolamento: usuário A não acessa recurso de B retorna 404 e verificar e2e logout limpa cookie e refresh subsequente 401 (~220 LOC)
+- [ ] 2.6 Seed categorias padrão no register (8-12 via `prisma createMany`) e verificar e2e `GET /categories` após register retorna árvore com `parentId` e cor/ícone (~150 LOC)
+- [ ] 2.7 Implementar `fintrack-accounts` service: CRUD + `computeBalance` (sum INCOME - EXPENSE + TRANSFER) e verificar unit test balance 170 com 2 incomes 100 e 1 expense 30 (~320 LOC)
+- [ ] 2.8 Implementar `fintrack-accounts` controller: `POST/GET/PATCH /accounts`, `PATCH /accounts/:id/archive` com `?includeArchived` e verificar e2e lista apenas contas do user e arquivada some da listagem padrão (~300 LOC)
+- [ ] 2.9 Implementar `fintrack-categories` service: CRUD hierárquico 1 nível, unicidade case-insensitive por `(userId, parentId, name)` e verificar unit 409 ao duplicar nome no mesmo parent (~300 LOC)
+- [ ] 2.10 Implementar `fintrack-categories` controller: `DELETE /categories/:id` com 409 se houver transações e `?reassignTo=` e verificar e2e 409 ao deletar em uso e 200 com reassign (~280 LOC)
 
 ## 3. Transações e Budgets (Semana 2-3) — fatiado para <500 LOC cada
 
