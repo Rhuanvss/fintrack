@@ -25,16 +25,16 @@
 
 ## 3. Transações e Budgets (Semana 2-3) — fatiado para <500 LOC cada
 
-- [ ] 3.1 Criar `Transaction` DTOs (`CreateTransactionDto` com `type: INCOME|EXPENSE`, `amount` Decimal 2 casas, `date` ISO, `description`, `accountId`, `categoryId?`) com `class-validator` e verificar unit rejeita amount 3 casas e date futura >1d (~200 LOC)
-- [ ] 3.2 Implementar `TransactionsService` create/update/delete/list base com paginação `page/limit` e ordenação `date desc, id desc` e verificar unit paginação retorna `total/hasNext` correto (~380 LOC)
-- [ ] 3.3 Implementar filtros `TransactionsService` por `from/to`, `categoryId`, `accountId` e busca `q` em description (ilike) e verificar e2e `GET /transactions?from&to&categoryId&q=mercado` filtra correto e 404 se accountId de outro user (~350 LOC)
-- [ ] 3.4 Implementar `TransactionsController` `POST/GET/PATCH/DELETE /transactions` com `ValidationPipe` e isolamento `userId` e verificar e2e CRUD completo e 404 ao acessar id de outro user (~300 LOC)
-- [ ] 3.5 Implementar transferência atômica `TRANSFER`: service cria par com `transferId` em `prisma.$transaction` e verificar unit cria 2 linhas e rollback se falhar uma (~320 LOC)
-- [ ] 3.6 Implementar validação e endpoint TRANSFER no controller: `fromAccountId != toAccountId`, ambas contas do user, e verificar e2e 201 retorna par e 400 se mesma conta (~220 LOC)
-- [ ] 3.7 Criar DTOs `Budget` (`categoryId`, `month 1-12`, `year`, `amount`) e `UpsertBudget` com `class-validator` e verificar unit rejeita month 13 (~150 LOC)
-- [ ] 3.8 Implementar `BudgetsService` upsert `PUT /budgets` com `@@unique` e cálculo `spent` (sum EXPENSE do mês) + `percentUsed` e verificar unit spent soma apenas EXPENSE e percent 50% com budget 500 e gasto 250 (~340 LOC)
-- [ ] 3.9 Implementar `BudgetsController` `GET /budgets?month&year` com join Category e verificar e2e lista contém `spent` e `percentUsed` e 0 quando sem transações (~250 LOC)
-- [ ] 3.10 Espelhar schemas Zod Transaction/Budget em `packages/shared` e teste de paridade DTO vs Zod e verificar `pnpm --filter shared test` garante contrato api/web diverge quebra build (~180 LOC)
+- [x] 3.1 Criar `Transaction` DTOs (`CreateTransactionDto` com `type: INCOME|EXPENSE`, `amount` Decimal 2 casas, `date` ISO, `description`, `accountId`, `categoryId?`) com `class-validator` e verificar unit rejeita amount 3 casas e date futura >1d (~200 LOC)
+- [x] 3.2 Implementar `TransactionsService` create/update/delete/list base com paginação `page/limit` e ordenação `date desc, id desc` e verificar unit paginação retorna `total/hasNext` correto (~380 LOC)
+- [x] 3.3 Implementar filtros `TransactionsService` por `from/to`, `categoryId`, `accountId` e busca `q` em description (ilike) e verificar e2e `GET /transactions?from&to&categoryId&q=mercado` filtra correto e 404 se accountId de outro user (~350 LOC)
+- [x] 3.4 Implementar `TransactionsController` `POST/GET/PATCH/DELETE /transactions` com `ValidationPipe` e isolamento `userId` e verificar e2e CRUD completo e 404 ao acessar id de outro user (~300 LOC)
+- [x] 3.5 Implementar transferência atômica `TRANSFER`: service cria par com `transferId` em `prisma.$transaction` e verificar unit cria 2 linhas e rollback se falhar uma (~320 LOC)
+- [x] 3.6 Implementar validação e endpoint TRANSFER no controller: `fromAccountId != toAccountId`, ambas contas do user, e verificar e2e 201 retorna par e 400 se mesma conta (~220 LOC)
+- [x] 3.7 Criar DTOs `Budget` (`categoryId`, `month 1-12`, `year`, `amount`) e `UpsertBudget` com `class-validator` e verificar unit rejeita month 13 (~150 LOC)
+- [x] 3.8 Implementar `BudgetsService` upsert `PUT /budgets` com `@@unique` e cálculo `spent` (sum EXPENSE do mês) + `percentUsed` e verificar unit spent soma apenas EXPENSE e percent 50% com budget 500 e gasto 250 (~340 LOC)
+- [x] 3.9 Implementar `BudgetsController` `GET /budgets?month&year` com join Category e verificar e2e lista contém `spent` e `percentUsed` e 0 quando sem transações (~250 LOC)
+- [x] 3.10 Espelhar schemas Zod Transaction/Budget em `packages/shared` e teste de paridade DTO vs Zod e verificar `pnpm --filter shared test` garante contrato api/web diverge quebra build (~180 LOC)
 
 ## 4. Dashboard Reports e Frontend (Semana 3-4) — fatiado para <500 LOC cada
 

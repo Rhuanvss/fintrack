@@ -10,7 +10,9 @@ import { AccountsModule } from './accounts/accounts.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { BudgetsModule } from './budgets/budgets.module';
 import { CategoriesModule } from './categories/categories.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { CategoriesModule } from './categories/categories.module';
     AuthModule,
     AccountsModule,
     CategoriesModule,
+    TransactionsModule,
+    BudgetsModule,
   ],
   controllers: [AppController],
   providers: [
