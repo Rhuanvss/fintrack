@@ -38,14 +38,14 @@
 
 ## 4. Dashboard Reports e Frontend (Semana 3-4) — fatiado para <500 LOC cada
 
-- [ ] 4.1 Implementar `ReportsService` `summary` (`totalIncome`, `totalExpense`, `balance`) com `aggregate` Prisma e validação intervalo max 12m e verificar unit summary 1000-400=600 para mês com seed (~280 LOC)
-- [ ] 4.2 Implementar `ReportsService` `byCategory` (`GET /reports/by-category` agrupado por categoria, `{total, percent}` desc) e verificar unit ranking ordena por total e soma apenas EXPENSE (~300 LOC)
-- [ ] 4.3 Implementar `ReportsService` `evolution` série mensal (`{month,year,income,expense,balance}` com zeros para meses vazios) via `groupBy` + preenchimento em TS e verificar unit retorna 8 meses para Jan-Ago com zeros (~340 LOC)
-- [ ] 4.4 Implementar `ReportsService` `balances` por conta e `ReportsController` com 4 rotas + DTOs `from/to` e verificar e2e 200 com balances e 400 se intervalo >12m (~280 LOC)
-- [ ] 4.5 Criar Next layout autenticado: `app/(app)/layout.tsx` com guard client (redirect /login se 401), header/nav, skeletons e estados empty/error e verificar navegação protege `/dashboard` sem token (~350 LOC)
-- [ ] 4.6 Criar página `/transactions` em Next com TanStack Query, Server Components lista inicial + Client mutações, filtros e optimistic update e verificar criar transação atualiza lista sem reload (~280 LOC) — quebrado de 4.6 original (transactions+accounts)
-- [ ] 4.7 Criar página `/accounts` em Next com TanStack Query, Server Components lista, mutações e archive, e verificar criar conta atualiza lista e arquivar some da listagem (~280 LOC) — quebrado de 4.6 original
-- [ ] 4.8 Criar páginas `/categories` e `/dashboard` shell com cards de saldo/budget e verificar `pnpm --filter web build` passa e Lighthouse local >=80 (~380 LOC)
+- [x] 4.1 Implementar `ReportsService` `summary` (`totalIncome`, `totalExpense`, `balance`) com `aggregate` Prisma e validação intervalo max 12m e verificar unit summary 1000-400=600 para mês com seed (~280 LOC)
+- [x] 4.2 Implementar `ReportsService` `byCategory` (`GET /reports/by-category` agrupado por categoria, `{total, percent}` desc) e verificar unit ranking ordena por total e soma apenas EXPENSE (~300 LOC)
+- [x] 4.3 Implementar `ReportsService` `evolution` série mensal (`{month,year,income,expense,balance}` com zeros para meses vazios) via `groupBy` + preenchimento em TS e verificar unit retorna 8 meses para Jan-Ago com zeros (~340 LOC)
+- [x] 4.4 Implementar `ReportsService` `balances` por conta e `ReportsController` com 4 rotas + DTOs `from/to` e verificar e2e 200 com balances e 400 se intervalo >12m (~280 LOC)
+- [x] 4.5 Criar Next layout autenticado: `app/(app)/layout.tsx` com guard client (redirect /login se 401), header/nav, skeletons e estados empty/error e verificar navegação protege `/dashboard` sem token (~350 LOC)
+- [x] 4.6 Criar página `/transactions` em Next com TanStack Query, Server Components lista inicial + Client mutações, filtros e optimistic update e verificar criar transação atualiza lista sem reload (~280 LOC) — quebrado de 4.6 original (transactions+accounts)
+- [x] 4.7 Criar página `/accounts` em Next com TanStack Query, Server Components lista, mutações e archive, e verificar criar conta atualiza lista e arquivar some da listagem (~280 LOC) — quebrado de 4.6 original
+- [x] 4.8 Criar páginas `/categories` e `/dashboard` shell com cards de saldo/budget e verificar `pnpm --filter web build` passa e Lighthouse local >=80 (~380 LOC)
 - [ ] 4.9 Integrar Recharts no dashboard: pizza por categoria, barras evolução mensal, cards com `percentUsed` e filtros `from/to` que atualizam query e verificar com mock gráfico renderiza e troca de mês refetch correto (~400 LOC)
 - [ ] 4.10 Adicionar Swagger `SwaggerModule` em `/api/docs` com decorators em todos os DTOs/controllers e verificar `GET /api/docs-json` retorna OpenAPI com 20+ rotas (~150 LOC)
 
