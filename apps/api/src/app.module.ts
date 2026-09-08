@@ -12,6 +12,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CategoriesModule } from './categories/categories.module';
+import { ReportsModule } from './reports/reports.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     CategoriesModule,
     TransactionsModule,
     BudgetsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [
