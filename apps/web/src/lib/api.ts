@@ -29,15 +29,16 @@ interface ApiOptions extends Omit<RequestInit, 'body'> {
 
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { body, headers, ...init } = options;
+  const hasBody = body !== undefined;
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
       ...headers,
     },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    ...(hasBody ? { body: JSON.stringify(body) } : {}),
   });
 
   if (res.status === 204) return undefined as unknown as T;
@@ -50,9 +51,11 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   }
 
   if (!res.ok) {
-    const message =
-      typeof data === 'object' && data !== null && 'message' in data
-        ? String(data.message)
+    const raw: unknown = typeof data === 'object' && data !== null && 'message' in data ? data.message : null;
+    const message: string = Array.isArray(raw)
+      ? raw.map((part) => (typeof part === 'string' ? part : JSON.stringify(part) ?? 'unknown')).join('; ')
+      : typeof raw === 'string'
+        ? raw
         : `Request failed with status ${res.status}`;
     throw new ApiError(res.status, message);
   }

@@ -16,10 +16,18 @@ function defaultRange(now = new Date()): { fromMonth: string; toMonth: string } 
   return { fromMonth: `${now.getFullYear()}-01`, toMonth: `${now.getFullYear()}-${pad(now.getMonth() + 1)}` };
 }
 
-function monthBounds(monthStr: string): { from: string; to: string; month: number; year: number } {
-  const [y, m] = monthStr.split('-').map(Number);
-  const year = y ?? new Date().getFullYear();
-  const month = m ?? 1;
+function parseMonth(monthStr: string): { month: number; year: number } | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(monthStr);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return null;
+  return { month, year };
+}
+
+function monthBounds(monthStr: string, fallback: { month: number; year: number }): { from: string; to: string; month: number; year: number } {
+  const parsed = parseMonth(monthStr) ?? fallback;
+  const { month, year } = parsed;
   const lastDay = new Date(year, month, 0).getDate();
   const pad = (n: number): string => String(n).padStart(2, '0');
   return { from: `${year}-${pad(month)}-01`, to: `${year}-${pad(month)}-${pad(lastDay)}`, month, year };
@@ -40,8 +48,10 @@ const inputClass = 'rounded-md border border-input bg-background px-3 py-2 text-
 
 export function DashboardShell(): React.JSX.Element {
   const [months, setMonths] = useState(defaultRange);
-  const from = monthBounds(months.fromMonth);
-  const to = monthBounds(months.toMonth);
+  const now = new Date();
+  const fallback = { month: now.getMonth() + 1, year: now.getFullYear() };
+  const from = monthBounds(months.fromMonth, fallback);
+  const to = monthBounds(months.toMonth, fallback);
 
   const [balancesQ, summaryQ, byCategoryQ, evolutionQ, budgetsQ] = useQueries({
     queries: [

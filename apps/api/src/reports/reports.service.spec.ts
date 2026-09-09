@@ -285,7 +285,7 @@ describe('ReportsService - task 4.3 evolution', () => {
       where: {
         userId: 'user_1',
         type: { in: ['INCOME', 'EXPENSE'] },
-        date: { gte: new Date(Date.UTC(2026, 0, 1)), lt: new Date(Date.UTC(2026, 1, 1)) },
+        date: { gte: new Date(Date.UTC(2026, 0, 1)), lt: new Date(new Date('2026-01-31').getTime() + 1) },
       },
       _sum: { amount: true },
     });
@@ -304,6 +304,27 @@ describe('ReportsService - task 4.3 evolution', () => {
     expect(res).toHaveLength(2);
     const where = prisma.transaction.groupBy.mock.calls[0]![0].where as Record<string, unknown>;
     expect(where).toMatchObject({ userId: 'user_1', accountId: 'acc_1', categoryId: 'cat_1' });
+  });
+
+  it('evolution limita buckets ao intervalo exato (consistente com summary)', async () => {
+    prisma.transaction.groupBy.mockResolvedValue([
+      { type: 'INCOME', _sum: { amount: 100 } },
+      { type: 'EXPENSE', _sum: { amount: 40 } },
+    ] as never);
+
+    const res = await service.evolution('user_1', { from: '2026-08-15', to: '2026-08-20' });
+
+    expect(res).toHaveLength(1);
+    expect(res[0]).toEqual({ month: 8, year: 2026, income: 100, expense: 40, balance: 60 });
+    expect(prisma.transaction.groupBy).toHaveBeenCalledWith({
+      by: ['type'],
+      where: {
+        userId: 'user_1',
+        type: { in: ['INCOME', 'EXPENSE'] },
+        date: { gte: new Date('2026-08-15'), lt: new Date(new Date('2026-08-20').getTime() + 1) },
+      },
+      _sum: { amount: true },
+    });
   });
 
   it('evolution rejeita intervalo maior que 12 meses e from maior que to', async () => {

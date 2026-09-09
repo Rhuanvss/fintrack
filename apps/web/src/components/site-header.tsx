@@ -19,8 +19,11 @@ export function SiteHeader(): React.JSX.Element {
   const { user, logout } = useAuth();
 
   async function handleLogout(): Promise<void> {
-    await logout();
-    router.replace('/login');
+    try {
+      await logout();
+    } finally {
+      router.replace('/login');
+    }
   }
 
   return (

@@ -34,22 +34,28 @@ async function refreshSession(): Promise<AuthUser | null> {
   }
 }
 
-function fetchMe(): Promise<AuthUser | null> {
+export function parseJwtPayload(token: string): AuthUser | null {
   // Token válido mas sem rota /me: decodifica o payload do JWT para exibir o usuário.
-  const token = getAccessToken();
-  if (!token) return Promise.resolve(null);
   try {
-    const payload = JSON.parse(atob(token.split('.')[1] ?? '')) as { sub?: string; email?: string; role?: string };
-    if (!payload.sub || !payload.email) return Promise.resolve(null);
-    return Promise.resolve({
+    const segment = token.split('.')[1] ?? '';
+    const padded = segment.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (segment.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded)) as { sub?: string; email?: string; role?: string; exp?: number };
+    if (!payload.sub || !payload.email) return null;
+    if (typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now()) return null;
+    return {
       id: payload.sub,
       name: payload.email.split('@')[0] ?? payload.email,
       email: payload.email,
       role: payload.role ?? 'USER',
-    });
+    };
   } catch {
-    return Promise.resolve(null);
+    return null;
   }
+}
+
+function fetchMe(): Promise<AuthUser | null> {
+  const token = getAccessToken();
+  return Promise.resolve(token ? parseJwtPayload(token) : null);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
@@ -59,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   useEffect(() => {
     let cancelled = false;
     async function boot(): Promise<void> {
-      const current = getAccessToken() ? await fetchMe() : await refreshSession();
+      const stored = getAccessToken() ? await fetchMe() : null;
+      const current = stored ?? (await refreshSession());
       if (cancelled) return;
       setUser(current);
       setStatus(current ? 'authenticated' : 'unauthenticated');

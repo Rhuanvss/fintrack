@@ -135,8 +135,8 @@ export class ReportsService {
 
     const series = await Promise.all(
       months.map(async ({ month, year }) => {
-        const start = new Date(Date.UTC(year, month - 1, 1));
-        const end = new Date(Date.UTC(year, month, 1));
+        const start = new Date(Math.max(Date.UTC(year, month - 1, 1), from.getTime()));
+        const end = new Date(Math.min(Date.UTC(year, month, 1), to.getTime() + 1));
         const groups = await this.prisma.transaction.groupBy({
           by: ['type'],
           where: {

@@ -27,28 +27,33 @@ export function TransactionsManager(): React.JSX.Element {
     queryFn: () => listTransactions(filters),
   });
 
+  const hasActiveFilters = [filters.q, filters.from, filters.to, filters.accountId, filters.categoryId].some((v) => !!v);
+  const isFirstPage = (filters.page ?? 1) <= 1;
+
   const createMutation = useMutation({
     mutationFn: (input: CreateTransactionInput) => createTransaction(input),
     onMutate: async (input) => {
       setFormError(null);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Paginated<Transaction>>(queryKey);
-      const optimistic: Transaction = {
-        id: `temp-${Date.now()}`,
-        type: input.type,
-        amount: String(input.amount),
-        date: new Date(input.date).toISOString(),
-        description: input.description,
-        accountId: input.accountId,
-        categoryId: input.categoryId ?? null,
-        userId: '',
-        transferId: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      queryClient.setQueryData<Paginated<Transaction>>(queryKey, (old) =>
-        old ? { ...old, items: [optimistic, ...old.items], total: old.total + 1 } : old,
-      );
+      if (!hasActiveFilters && isFirstPage) {
+        const optimistic: Transaction = {
+          id: `temp-${Date.now()}`,
+          type: input.type,
+          amount: String(input.amount),
+          date: new Date(input.date).toISOString(),
+          description: input.description,
+          accountId: input.accountId,
+          categoryId: input.categoryId ?? null,
+          userId: '',
+          transferId: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        queryClient.setQueryData<Paginated<Transaction>>(queryKey, (old) =>
+          old ? { ...old, items: [optimistic, ...old.items].slice(0, PAGE_SIZE), total: old.total + 1 } : old,
+        );
+      }
       return { previous };
     },
     onError: (err, _input, context) => {
@@ -143,21 +148,36 @@ export function TransactionsManager(): React.JSX.Element {
       ) : !data || data.items.length === 0 ? (
         <EmptyState title="Nenhuma transação" hint="Ajuste os filtros ou adicione a primeira." />
       ) : (
-        <ul className="divide-y rounded-lg border" aria-label="Lista de transações">
-          {data.items.map((tx) => (
-            <li key={tx.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{tx.description}</p>
-                <p className="text-xs text-muted-foreground">
-                  {tx.type} · {Number(tx.amount).toFixed(2)}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" aria-label={`Excluir ${tx.description}`} disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(tx.id)}>
-                Excluir
+        <>
+          <ul className="divide-y rounded-lg border" aria-label="Lista de transações">
+            {data.items.map((tx) => (
+              <li key={tx.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{tx.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {tx.type} · {Number(tx.amount).toFixed(2)}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" aria-label={`Excluir ${tx.description}`} disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(tx.id)}>
+                  Excluir
+                </Button>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Página {data.page} · {data.total} item(ns)
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={data.page <= 1} onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 1) - 1 }))}>
+                Anterior
               </Button>
-            </li>
-          ))}
-        </ul>
+              <Button variant="outline" size="sm" disabled={!data.hasNext} onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 1) + 1 }))}>
+                Próxima
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
