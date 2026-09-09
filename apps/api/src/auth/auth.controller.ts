@@ -10,11 +10,13 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -50,6 +52,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiOperation({ summary: 'Cadastrar novo usuário' })
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -71,6 +74,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiOperation({ summary: 'Autenticar e emitir tokens' })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -93,6 +97,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiOperation({ summary: 'Renovar access token via refresh cookie' })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
@@ -112,6 +117,7 @@ export class AuthController {
     return { accessToken: result.accessToken };
   }
 
+  @ApiOperation({ summary: 'Encerrar sessão e limpar refresh cookie' })
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(

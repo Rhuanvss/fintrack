@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { setupSwagger } from './swagger';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -11,6 +12,7 @@ async function bootstrap(): Promise<void> {
     origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
     credentials: true,
   });
+  setupSwagger(app);
   const port = process.env.PORT ? Number(process.env.PORT) : 3001;
   await app.listen(port);
   // eslint-disable-next-line no-console

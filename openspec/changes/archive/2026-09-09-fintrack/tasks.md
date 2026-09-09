@@ -46,8 +46,8 @@
 - [x] 4.6 Criar página `/transactions` em Next com TanStack Query, Server Components lista inicial + Client mutações, filtros e optimistic update e verificar criar transação atualiza lista sem reload (~280 LOC) — quebrado de 4.6 original (transactions+accounts)
 - [x] 4.7 Criar página `/accounts` em Next com TanStack Query, Server Components lista, mutações e archive, e verificar criar conta atualiza lista e arquivar some da listagem (~280 LOC) — quebrado de 4.6 original
 - [x] 4.8 Criar páginas `/categories` e `/dashboard` shell com cards de saldo/budget e verificar `pnpm --filter web build` passa e Lighthouse local >=80 (~380 LOC)
-- [ ] 4.9 Integrar Recharts no dashboard: pizza por categoria, barras evolução mensal, cards com `percentUsed` e filtros `from/to` que atualizam query e verificar com mock gráfico renderiza e troca de mês refetch correto (~400 LOC)
-- [ ] 4.10 Adicionar Swagger `SwaggerModule` em `/api/docs` com decorators em todos os DTOs/controllers e verificar `GET /api/docs-json` retorna OpenAPI com 20+ rotas (~150 LOC)
+- [x] 4.9 Integrar Recharts no dashboard: pizza por categoria, barras evolução mensal, cards com `percentUsed` e filtros `from/to` que atualizam query e verificar com mock gráfico renderiza e troca de mês refetch correto (~400 LOC)
+- [x] 4.10 Adicionar Swagger `SwaggerModule` em `/api/docs` com decorators em todos os DTOs/controllers e verificar `GET /api/docs-json` retorna OpenAPI com 20+ rotas (~150 LOC)
 
 ## 5. Diferencial E — Export PDF/XLSX (Semana 4) — fatiado para <500 LOC cada
 

@@ -1,22 +1,28 @@
 'use client';
 
 import { useQueries } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, Tooltip, XAxis, YAxis } from 'recharts';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/lib/api';
 import { listBudgets } from '@/lib/budgets';
-import { fetchBalances, fetchSummary } from '@/lib/reports';
+import { fetchBalances, fetchByCategory, fetchEvolution, fetchSummary } from '@/lib/reports';
 
-function monthRange(now = new Date()): { from: string; to: string; month: number; year: number } {
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+const PIE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+
+function defaultRange(now = new Date()): { fromMonth: string; toMonth: string } {
   const pad = (n: number): string => String(n).padStart(2, '0');
-  return {
-    from: `${year}-${pad(month)}-01`,
-    to: `${year}-${pad(month)}-${pad(now.getDate())}`,
-    month,
-    year,
-  };
+  return { fromMonth: `${now.getFullYear()}-01`, toMonth: `${now.getFullYear()}-${pad(now.getMonth() + 1)}` };
+}
+
+function monthBounds(monthStr: string): { from: string; to: string; month: number; year: number } {
+  const [y, m] = monthStr.split('-').map(Number);
+  const year = y ?? new Date().getFullYear();
+  const month = m ?? 1;
+  const lastDay = new Date(year, month, 0).getDate();
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return { from: `${year}-${pad(month)}-01`, to: `${year}-${pad(month)}-${pad(lastDay)}`, month, year };
 }
 
 function Card({ title, value, hint }: { title: string; value: string; hint?: string }): React.JSX.Element {
@@ -30,18 +36,25 @@ function Card({ title, value, hint }: { title: string; value: string; hint?: str
 }
 
 const money = (n: number): string => n.toFixed(2);
+const inputClass = 'rounded-md border border-input bg-background px-3 py-2 text-sm';
 
 export function DashboardShell(): React.JSX.Element {
-  const range = monthRange();
-  const [balancesQ, summaryQ, budgetsQ] = useQueries({
+  const [months, setMonths] = useState(defaultRange);
+  const from = monthBounds(months.fromMonth);
+  const to = monthBounds(months.toMonth);
+
+  const [balancesQ, summaryQ, byCategoryQ, evolutionQ, budgetsQ] = useQueries({
     queries: [
       { queryKey: ['balances'], queryFn: () => fetchBalances() },
-      { queryKey: ['summary', range.from, range.to], queryFn: () => fetchSummary(range.from, range.to) },
-      { queryKey: ['budgets', range.month, range.year], queryFn: () => listBudgets(range.month, range.year) },
+      { queryKey: ['summary', from.from, to.to], queryFn: () => fetchSummary(from.from, to.to) },
+      { queryKey: ['by-category', from.from, to.to], queryFn: () => fetchByCategory(from.from, to.to) },
+      { queryKey: ['evolution', from.from, to.to], queryFn: () => fetchEvolution(from.from, to.to) },
+      { queryKey: ['budgets', to.month, to.year], queryFn: () => listBudgets(to.month, to.year) },
     ],
   });
+  const queries = [balancesQ, summaryQ, byCategoryQ, evolutionQ, budgetsQ];
 
-  if (balancesQ.isPending || summaryQ.isPending || budgetsQ.isPending) {
+  if (queries.some((q) => q.isPending)) {
     return (
       <div className="space-y-4" aria-label="Carregando dashboard">
         <Skeleton className="h-8 w-48" />
@@ -54,17 +67,16 @@ export function DashboardShell(): React.JSX.Element {
     );
   }
 
-  const error = [balancesQ, summaryQ, budgetsQ].find((q) => q.isError)?.error;
-  if (error || !balancesQ.data || !summaryQ.data || !budgetsQ.data) {
+  const error = queries.find((q) => q.isError)?.error;
+  const loaded = balancesQ.data && summaryQ.data && byCategoryQ.data && evolutionQ.data && budgetsQ.data;
+  if (error || !loaded) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <ErrorState
           message={error instanceof ApiError ? error.message : 'Falha ao carregar.'}
           onRetry={() => {
-            void balancesQ.refetch();
-            void summaryQ.refetch();
-            void budgetsQ.refetch();
+            for (const q of queries) void q.refetch();
           }}
         />
       </div>
@@ -73,16 +85,68 @@ export function DashboardShell(): React.JSX.Element {
 
   const totalBalance = balancesQ.data.reduce((acc, b) => acc + b.balance, 0);
   const summary = summaryQ.data;
+  const byCategory = byCategoryQ.data;
+  const evolution = evolutionQ.data.map((e) => ({ ...e, label: `${String(e.month).padStart(2, '0')}/${e.year}` }));
   const budgets = budgetsQ.data;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <div className="flex items-center gap-2" aria-label="Período">
+          <label className="text-sm text-muted-foreground">
+            De <input aria-label="De (mês)" type="month" value={months.fromMonth} onChange={(e) => setMonths((m) => ({ ...m, fromMonth: e.target.value }))} className={inputClass} />
+          </label>
+          <label className="text-sm text-muted-foreground">
+            Até <input aria-label="Até (mês)" type="month" value={months.toMonth} onChange={(e) => setMonths((m) => ({ ...m, toMonth: e.target.value }))} className={inputClass} />
+          </label>
+        </div>
+      </div>
 
-      <div className="grid gap-4 sm:grid-cols-3" aria-label="Resumo do mês">
+      <div className="grid gap-4 sm:grid-cols-3" aria-label="Resumo do período">
         <Card title="Saldo total" value={money(totalBalance)} hint={`${balancesQ.data.length} conta(s)`} />
-        <Card title="Receitas (mês)" value={money(summary.totalIncome)} />
-        <Card title="Despesas (mês)" value={money(summary.totalExpense)} hint={`Balanço ${money(summary.balance)}`} />
+        <Card title="Receitas" value={money(summary.totalIncome)} />
+        <Card title="Despesas" value={money(summary.totalExpense)} hint={`Balanço ${money(summary.balance)}`} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="space-y-2 rounded-lg border p-4" aria-label="Gastos por categoria">
+          <h2 className="text-lg font-semibold">Gastos por categoria</h2>
+          {byCategory.length === 0 ? (
+            <EmptyState title="Sem gastos no período" />
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <PieChart width={380} height={280}>
+                <Pie data={byCategory} dataKey="total" nameKey="categoryName" cx="50%" cy="50%" outerRadius={100} label>
+                  {byCategory.map((entry, i) => (
+                    <Cell key={entry.categoryId ?? 'null'} fill={PIE_COLORS[i % PIE_COLORS.length] ?? '#8884d8'} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => money(Number(value ?? 0))} />
+                <Legend />
+              </PieChart>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-2 rounded-lg border p-4" aria-label="Evolução mensal">
+          <h2 className="text-lg font-semibold">Evolução mensal</h2>
+          {evolution.length === 0 ? (
+            <EmptyState title="Sem dados no período" />
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <BarChart width={420} height={280} data={evolution}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" />
+                <YAxis />
+                <Tooltip formatter={(value) => money(Number(value ?? 0))} />
+                <Legend />
+                <Bar dataKey="income" name="Receitas" fill="#22c55e" />
+                <Bar dataKey="expense" name="Despesas" fill="#ef4444" />
+              </BarChart>
+            </div>
+          )}
+        </section>
       </div>
 
       <section className="space-y-3" aria-label="Orçamentos do mês">

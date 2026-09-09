@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsDateString,
   IsIn,
@@ -30,26 +31,32 @@ export class MaxFutureDateConstraint implements ValidatorConstraintInterface {
 }
 
 export class CreateTransactionDto {
+  @ApiProperty({ enum: ['INCOME', 'EXPENSE'], example: 'EXPENSE' })
   @IsIn(['INCOME', 'EXPENSE'], { message: 'type must be INCOME or EXPENSE' })
   type!: 'INCOME' | 'EXPENSE';
 
+  @ApiProperty({ example: 49.9 })
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'amount must have at most 2 decimal places' })
   @Min(0.01, { message: 'amount must be positive' })
   amount!: number;
 
+  @ApiProperty({ example: '2026-08-15T00:00:00.000Z' })
   @IsDateString({}, { message: 'date must be ISO 8601' })
   @Validate(MaxFutureDateConstraint, { message: 'date must not be more than 1 day in the future' })
   date!: string;
 
+  @ApiProperty({ example: 'Mercado' })
   @IsString()
   @IsNotEmpty({ message: 'description is required' })
   @MaxLength(255, { message: 'description must be at most 255 characters' })
   description!: string;
 
+  @ApiProperty()
   @IsString()
   @IsNotEmpty({ message: 'accountId is required' })
   accountId!: string;
 
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   categoryId?: string;
